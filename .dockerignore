@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.github
+.env
+.env.*
+artifacts/*
+!artifacts/.gitkeep
+n8n_data
+*.log
+.DS_Store

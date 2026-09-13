@@ -1,0 +1,5 @@
+{
+  "nameInput": "#name",
+  "submitButton": "#submit",
+  "result": "#result"
+}

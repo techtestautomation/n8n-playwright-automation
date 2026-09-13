@@ -1,0 +1,82 @@
+{
+  "name": "Playwright - Locator Registry Demo",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c7315434-7564-4e82-8931-66609eee557f",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://playwright-api:3001/automation/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "f5a9c7bd-30f3-46aa-965b-e62c792a4df4",
+      "name": "Execute Playwright"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"steps\": [\n    {\n      \"action\": \"navigate\",\n      \"url\": \"https://example.com\"\n    },\n    {\n      \"action\": \"getText\",\n      \"locatorRef\": \"common.pageHeading\"\n    },\n    {\n      \"action\": \"screenshot\"\n    }\n  ],\n  \"captureTrace\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "dd4dd383-1eb4-4434-98bc-a9fae404986f",
+      "name": "Define Automation"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Define Automation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define Automation": {
+      "main": [
+        [
+          {
+            "node": "Execute Playwright",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "nodeGroups": [],
+  "tags": []
+}
