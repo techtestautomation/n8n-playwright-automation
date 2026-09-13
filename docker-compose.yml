@@ -1,0 +1,26 @@
+services:
+  playwright-api:
+    build: .
+    environment:
+      PORT: 3001
+      HOST: 0.0.0.0
+      HEADLESS: "true"
+      ARTIFACT_DIR: /app/artifacts
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./artifacts:/app/artifacts
+
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_SECURE_COOKIE: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - playwright-api
+
+volumes:
+  n8n_data:

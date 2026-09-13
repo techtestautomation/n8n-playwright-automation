@@ -1,0 +1,42 @@
+{
+  "name": "n8n-playwright-automation",
+  "version": "0.1.0",
+  "description": "Portfolio-grade n8n orchestration with a Fastify + Playwright browser automation execution service.",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test tests/**/*.test.ts",
+    "test:browser": "tsx scripts/browser-smoke.ts",
+    "check": "npm run typecheck && npm test && npm run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "keywords": [
+    "n8n",
+    "playwright",
+    "fastify",
+    "browser-automation",
+    "typescript",
+    "upwork"
+  ],
+  "author": "Rajkumar",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "fastify": "5.12.4",
+    "playwright": "1.63.0",
+    "zod": "4.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prettier": "^3.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.9.0"
+  }
+}
