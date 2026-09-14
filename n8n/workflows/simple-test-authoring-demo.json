@@ -27,7 +27,7 @@
     {
       "parameters": {
         "mode": "raw",
-        "jsonOutput": "{\n  \"steps\": [\n    {\n      \"action\": \"navigate\",\n      \"url\": \"https://example.com\"\n    },\n    {\n      \"action\": \"getText\",\n      \"locatorRef\": \"common.pageHeading\"\n    },\n    {\n      \"action\": \"screenshot\"\n    }\n  ],\n  \"captureTrace\": true\n}",
+        "jsonOutput": "{\n  \"script\": \"OPEN http://demo-app:3000\\nTYPE test-page.nameInput = Raj\\nCLICK test-page.submitButton\\nWAIT test-page.result\\nVERIFY TEXT test-page.result = Hello Raj\\nSCREENSHOT\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
@@ -76,7 +76,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "3bcd6928-472b-4df8-be0f-efa2bf001838",
+  "versionId": "e8d9479d-2340-47ce-9db3-d151aebb469f",
   "nodeGroups": [],
   "tags": []
 }

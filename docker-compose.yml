@@ -11,6 +11,12 @@ services:
     volumes:
       - ./artifacts:/app/artifacts
 
+  demo-app:
+    build:
+      context: ./demo-app
+    ports:
+      - "3000:3000"
+
   n8n:
     image: n8nio/n8n:latest
     ports:
@@ -21,6 +27,7 @@ services:
       - n8n_data:/home/node/.n8n
     depends_on:
       - playwright-api
+      - demo-app
 
 volumes:
   n8n_data:

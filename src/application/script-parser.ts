@@ -84,6 +84,62 @@ export class ScriptParser {
         };
       }
 
+      case "TYPE": {
+        const match = line.match(/^TYPE\s+(.+?)\s*=\s*(.*)$/i);
+
+        if (!match) {
+          throw new Error(
+            `Line ${lineNumber}: Expected TYPE <element> = <value>`,
+          );
+        }
+
+        const locatorRef = match[1]?.trim();
+        const value = match[2] ?? "";
+
+        if (!locatorRef) {
+          throw new Error(
+            `Line ${lineNumber}: TYPE requires an element reference`,
+          );
+        }
+
+        return {
+          action: "fill",
+          locatorRef,
+          value,
+        };
+      }
+
+      case "CLICK": {
+        const locatorRef = line.slice("CLICK".length).trim();
+
+        if (!locatorRef) {
+          throw new Error(
+            `Line ${lineNumber}: CLICK requires an element reference`,
+          );
+        }
+
+        return {
+          action: "click",
+          locatorRef,
+        };
+      }
+
+      case "WAIT": {
+        const locatorRef = line.slice("WAIT".length).trim();
+
+        if (!locatorRef) {
+          throw new Error(
+            `Line ${lineNumber}: WAIT requires an element reference`,
+          );
+        }
+
+        return {
+          action: "waitFor",
+
+          locatorRef,
+        };
+      }
+
       case "SCREENSHOT": {
         if (line !== "SCREENSHOT") {
           throw new Error(

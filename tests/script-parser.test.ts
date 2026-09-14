@@ -116,3 +116,162 @@ test("rejects malformed VERIFY TEXT", () => {
     /Expected VERIFY TEXT/i,
   );
 });
+
+test("parses TYPE command", () => {
+  const parser = new ScriptParser();
+
+  const result = parser.parse(`
+TYPE login.usernameInput = raj@example.com
+`);
+
+  assert.deepEqual(result.steps, [
+    {
+      action: "fill",
+      locatorRef: "login.usernameInput",
+      value: "raj@example.com",
+    },
+  ]);
+});
+
+test("TYPE preserves spaces in value", () => {
+  const parser = new ScriptParser();
+
+  const result = parser.parse(`
+TYPE profile.fullName = Raj Kumar
+`);
+
+  assert.deepEqual(result.steps, [
+    {
+      action: "fill",
+      locatorRef: "profile.fullName",
+      value: "Raj Kumar",
+    },
+  ]);
+});
+
+test("TYPE allows empty value", () => {
+  const parser = new ScriptParser();
+
+  const result = parser.parse(`
+TYPE login.usernameInput =
+`);
+
+  assert.deepEqual(result.steps, [
+    {
+      action: "fill",
+      locatorRef: "login.usernameInput",
+      value: "",
+    },
+  ]);
+});
+
+test("rejects malformed TYPE command", () => {
+  const parser = new ScriptParser();
+
+  assert.throws(
+    () => parser.parse("TYPE login.usernameInput"),
+    /Expected TYPE <element> = <value>/i,
+  );
+});
+
+test("parses CLICK command", () => {
+  const parser = new ScriptParser();
+
+  const result = parser.parse(`
+CLICK login.submitButton
+`);
+
+  assert.deepEqual(result.steps, [
+    {
+      action: "click",
+      locatorRef: "login.submitButton",
+    },
+  ]);
+});
+
+test("rejects CLICK without element reference", () => {
+  const parser = new ScriptParser();
+
+  assert.throws(
+    () => parser.parse("CLICK"),
+    /CLICK requires an element reference/i,
+  );
+});
+
+test("parses WAIT command", () => {
+  const parser = new ScriptParser();
+
+  const result = parser.parse(`
+WAIT dashboard.heading
+`);
+
+  assert.deepEqual(result.steps, [
+    {
+      action: "waitFor",
+      locatorRef: "dashboard.heading",
+    },
+  ]);
+});
+
+test("rejects WAIT without element reference", () => {
+  const parser = new ScriptParser();
+
+  assert.throws(
+    () => parser.parse("WAIT"),
+    /WAIT requires an element reference/i,
+  );
+});
+
+test("parses a complete user workflow", () => {
+  const parser = new ScriptParser();
+
+  const result = parser.parse(`
+OPEN https://example.com/login
+TYPE login.usernameInput = raj@example.com
+TYPE login.passwordInput = secret
+CLICK login.submitButton
+WAIT dashboard.heading
+READ dashboard.heading
+VERIFY TEXT dashboard.heading = Welcome
+SCREENSHOT
+`);
+
+  assert.deepEqual(result.steps, [
+    {
+      action: "navigate",
+      url: "https://example.com/login",
+    },
+    {
+      action: "fill",
+      locatorRef: "login.usernameInput",
+      value: "raj@example.com",
+    },
+    {
+      action: "fill",
+      locatorRef: "login.passwordInput",
+      value: "secret",
+    },
+    {
+      action: "click",
+      locatorRef: "login.submitButton",
+    },
+    {
+      action: "waitFor",
+      locatorRef: "dashboard.heading",
+    },
+    {
+      action: "getText",
+      locatorRef: "dashboard.heading",
+    },
+    {
+      action: "verifyText",
+      locatorRef: "dashboard.heading",
+      expected: "Welcome",
+    },
+    {
+      action: "screenshot",
+    },
+  ]);
+
+  assert.equal(result.captureTrace, true);
+});
