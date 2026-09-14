@@ -1,14 +1,14 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
+import assert from "node:assert/strict";
+import test from "node:test";
 
-import { validateAutomationRequest } from '../src/domain/automation.js';
+import { validateAutomationRequest } from "../src/domain/automation.js";
 
-test('validates and normalizes a navigate step', () => {
+test("validates and normalizes a navigate step", () => {
   const result = validateAutomationRequest({
     steps: [
       {
-        action: 'navigate',
-        url: 'https://example.com',
+        action: "navigate",
+        url: "https://example.com",
       },
     ],
   });
@@ -16,27 +16,27 @@ test('validates and normalizes a navigate step', () => {
   assert.deepEqual(result, {
     steps: [
       {
-        action: 'navigate',
-        url: 'https://example.com/',
+        action: "navigate",
+        url: "https://example.com/",
       },
     ],
     captureTrace: false,
   });
 });
 
-test('validates a multi-step automation request', () => {
+test("validates a multi-step automation request", () => {
   const result = validateAutomationRequest({
     steps: [
       {
-        action: 'navigate',
-        url: 'https://example.com',
+        action: "navigate",
+        url: "https://example.com",
       },
       {
-        action: 'getText',
-        locator: 'h1',
+        action: "getText",
+        locator: "h1",
       },
       {
-        action: 'screenshot',
+        action: "screenshot",
       },
     ],
     captureTrace: true,
@@ -46,63 +46,63 @@ test('validates a multi-step automation request', () => {
   assert.equal(result.captureTrace, true);
 });
 
-test('validates locatorRef', () => {
+test("validates locatorRef", () => {
   const result = validateAutomationRequest({
     steps: [
       {
-        action: 'click',
-        locatorRef: 'login.submitButton',
+        action: "click",
+        locatorRef: "login.submitButton",
       },
     ],
   });
 
   assert.deepEqual(result.steps[0], {
-    action: 'click',
-    locatorRef: 'login.submitButton',
+    action: "click",
+    locatorRef: "login.submitButton",
   });
 });
 
-test('validates raw locator', () => {
+test("validates raw locator", () => {
   const result = validateAutomationRequest({
     steps: [
       {
-        action: 'click',
-        locator: '#submit',
+        action: "click",
+        locator: "#submit",
       },
     ],
   });
 
   assert.deepEqual(result.steps[0], {
-    action: 'click',
-    locator: '#submit',
+    action: "click",
+    locator: "#submit",
   });
 });
 
-test('validates fill action with locatorRef', () => {
+test("validates fill action with locatorRef", () => {
   const result = validateAutomationRequest({
     steps: [
       {
-        action: 'fill',
-        locatorRef: 'login.usernameInput',
-        value: 'raj',
+        action: "fill",
+        locatorRef: "login.usernameInput",
+        value: "raj",
       },
     ],
   });
 
   assert.deepEqual(result.steps[0], {
-    action: 'fill',
-    locatorRef: 'login.usernameInput',
-    value: 'raj',
+    action: "fill",
+    locatorRef: "login.usernameInput",
+    value: "raj",
   });
 });
 
-test('allows empty string as fill value', () => {
+test("allows empty string as fill value", () => {
   const result = validateAutomationRequest({
     steps: [
       {
-        action: 'fill',
-        locator: '#username',
-        value: '',
+        action: "fill",
+        locator: "#username",
+        value: "",
       },
     ],
   });
@@ -110,14 +110,14 @@ test('allows empty string as fill value', () => {
   const step = result.steps[0];
 
   assert.ok(step);
-  assert.equal(step.action, 'fill');
+  assert.equal(step.action, "fill");
 
-  if (step.action === 'fill') {
-    assert.equal(step.value, '');
+  if (step.action === "fill") {
+    assert.equal(step.value, "");
   }
 });
 
-test('rejects empty steps', () => {
+test("rejects empty steps", () => {
   assert.throws(
     () =>
       validateAutomationRequest({
@@ -127,14 +127,14 @@ test('rejects empty steps', () => {
   );
 });
 
-test('rejects unsupported URL protocols', () => {
+test("rejects unsupported URL protocols", () => {
   assert.throws(
     () =>
       validateAutomationRequest({
         steps: [
           {
-            action: 'navigate',
-            url: 'file:///etc/passwd',
+            action: "navigate",
+            url: "file:///etc/passwd",
           },
         ],
       }),
@@ -142,13 +142,13 @@ test('rejects unsupported URL protocols', () => {
   );
 });
 
-test('rejects navigate step without url', () => {
+test("rejects navigate step without url", () => {
   assert.throws(
     () =>
       validateAutomationRequest({
         steps: [
           {
-            action: 'navigate',
+            action: "navigate",
           },
         ],
       }),
@@ -156,13 +156,13 @@ test('rejects navigate step without url', () => {
   );
 });
 
-test('rejects locator action without locator or locatorRef', () => {
+test("rejects locator action without locator or locatorRef", () => {
   assert.throws(
     () =>
       validateAutomationRequest({
         steps: [
           {
-            action: 'click',
+            action: "click",
           },
         ],
       }),
@@ -170,15 +170,15 @@ test('rejects locator action without locator or locatorRef', () => {
   );
 });
 
-test('rejects locator action with both locator and locatorRef', () => {
+test("rejects locator action with both locator and locatorRef", () => {
   assert.throws(
     () =>
       validateAutomationRequest({
         steps: [
           {
-            action: 'click',
-            locator: '#submit',
-            locatorRef: 'login.submitButton',
+            action: "click",
+            locator: "#submit",
+            locatorRef: "login.submitButton",
           },
         ],
       }),
@@ -186,14 +186,14 @@ test('rejects locator action with both locator and locatorRef', () => {
   );
 });
 
-test('rejects fill action without value', () => {
+test("rejects fill action without value", () => {
   assert.throws(
     () =>
       validateAutomationRequest({
         steps: [
           {
-            action: 'fill',
-            locatorRef: 'login.usernameInput',
+            action: "fill",
+            locatorRef: "login.usernameInput",
           },
         ],
       }),
@@ -201,16 +201,49 @@ test('rejects fill action without value', () => {
   );
 });
 
-test('rejects unsupported action', () => {
+test("rejects unsupported action", () => {
   assert.throws(
     () =>
       validateAutomationRequest({
         steps: [
           {
-            action: 'dance',
+            action: "dance",
           },
         ],
       }),
     /not supported/i,
+  );
+});
+
+test("validates verifyText action", () => {
+  const result = validateAutomationRequest({
+    steps: [
+      {
+        action: "verifyText",
+        locatorRef: "common.pageHeading",
+        expected: "Example Domain",
+      },
+    ],
+  });
+
+  assert.deepEqual(result.steps[0], {
+    action: "verifyText",
+    locatorRef: "common.pageHeading",
+    expected: "Example Domain",
+  });
+});
+
+test("rejects verifyText without expected text", () => {
+  assert.throws(
+    () =>
+      validateAutomationRequest({
+        steps: [
+          {
+            action: "verifyText",
+            locatorRef: "common.pageHeading",
+          },
+        ],
+      }),
+    /expected is required/i,
   );
 });

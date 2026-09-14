@@ -1,22 +1,23 @@
-import { mkdir } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
-import path from 'node:path';
-import { chromium } from 'playwright';
+import { mkdir } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import path from "node:path";
+import { chromium } from "playwright";
 
-import type { AutomationExecutor } from '../application/automation-executor.js';
-import type { LocatorRegistry } from '../application/locator-registry.js';
+import type { AutomationExecutor } from "../application/automation-executor.js";
+import type { LocatorRegistry } from "../application/locator-registry.js";
 import type {
   AutomationRunRequest,
   AutomationRunResult,
   AutomationStepResult,
-} from '../domain/automation.js';
+} from "../domain/automation.js";
 
 export class PlaywrightAutomationExecutor implements AutomationExecutor {
   constructor(private readonly locatorRegistry: LocatorRegistry) {}
 
-  private resolveLocator(
-    step: { locator?: string; locatorRef?: string },
-  ): string {
+  private resolveLocator(step: {
+    locator?: string;
+    locatorRef?: string;
+  }): string {
     if (step.locator) {
       return step.locator;
     }
@@ -25,20 +26,20 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
       return this.locatorRegistry.resolve(step.locatorRef);
     }
 
-    throw new Error('Locator is missing');
+    throw new Error("Locator is missing");
   }
 
   async run(request: AutomationRunRequest): Promise<AutomationRunResult> {
     const startedAt = new Date().toISOString();
     const started = Date.now();
 
-    const artifactDir = process.env.ARTIFACT_DIR ?? './artifacts';
+    const artifactDir = process.env.ARTIFACT_DIR ?? "./artifacts";
     const runId = randomUUID();
 
     await mkdir(artifactDir, { recursive: true });
 
     const browser = await chromium.launch({
-      headless: process.env.HEADLESS !== 'false',
+      headless: process.env.HEADLESS !== "false",
     });
 
     const context = await browser.newContext();
@@ -64,16 +65,16 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
         const stepStarted = Date.now();
 
         switch (step.action) {
-          case 'navigate': {
+          case "navigate": {
             await page.goto(step.url, {
-              waitUntil: 'domcontentloaded',
+              waitUntil: "domcontentloaded",
               timeout: 30_000,
             });
 
             stepResults.push({
               index,
               action: step.action,
-              status: 'passed',
+              status: "passed",
               durationMs: Date.now() - stepStarted,
               data: {
                 finalUrl: page.url(),
@@ -83,7 +84,7 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
             break;
           }
 
-          case 'click': {
+          case "click": {
             const locator = this.resolveLocator(step);
 
             await page.locator(locator).click();
@@ -91,13 +92,13 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
             stepResults.push({
               index,
               action: step.action,
-              status: 'passed',
+              status: "passed",
               durationMs: Date.now() - stepStarted,
             });
             break;
           }
-          
-          case 'fill': {
+
+          case "fill": {
             const locator = this.resolveLocator(step);
 
             await page.locator(locator).fill(step.value);
@@ -105,20 +106,20 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
             stepResults.push({
               index,
               action: step.action,
-              status: 'passed',
+              status: "passed",
               durationMs: Date.now() - stepStarted,
             });
             break;
           }
 
-          case 'getText': {
+          case "getText": {
             const locator = this.resolveLocator(step);
             const text = await page.locator(locator).textContent();
 
             stepResults.push({
               index,
               action: step.action,
-              status: 'passed',
+              status: "passed",
               durationMs: Date.now() - stepStarted,
               data: {
                 text,
@@ -127,20 +128,45 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
             break;
           }
 
-          case 'waitFor': {
+          case "verifyText": {
+            const locator = this.resolveLocator(step);
+            const actual = await page.locator(locator).textContent();
+
+            if (actual?.trim() !== step.expected.trim()) {
+              throw new Error(
+                `Text verification failed for "${step.locatorRef ?? step.locator}". ` +
+                  `Expected "${step.expected}", but received "${actual?.trim() ?? ""}"`,
+              );
+            }
+
+            stepResults.push({
+              index,
+              action: step.action,
+              status: "passed",
+              durationMs: Date.now() - stepStarted,
+              data: {
+                expected: step.expected,
+                actual: actual?.trim() ?? "",
+              },
+            });
+
+            break;
+          }
+
+          case "waitFor": {
             const locator = this.resolveLocator(step);
             await page.locator(locator).waitFor();
 
             stepResults.push({
               index,
               action: step.action,
-              status: 'passed',
+              status: "passed",
               durationMs: Date.now() - stepStarted,
             });
             break;
           }
 
-          case 'screenshot': {
+          case "screenshot": {
             const screenshotPath = path.join(
               artifactDir,
               `${runId}-step-${index}.png`,
@@ -154,7 +180,7 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
             stepResults.push({
               index,
               action: step.action,
-              status: 'passed',
+              status: "passed",
               durationMs: Date.now() - stepStarted,
               artifact: screenshotPath,
             });
@@ -176,7 +202,7 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
       }
 
       return {
-        status: 'passed',
+        status: "passed",
         startedAt,
         durationMs: Date.now() - started,
         steps: stepResults,
@@ -200,18 +226,16 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
       }
 
       return {
-        status: 'failed',
+        status: "failed",
         startedAt,
         durationMs: Date.now() - started,
         artifacts: {
           trace: tracePath,
         },
         error: {
-          name: error instanceof Error ? error.name : 'Error',
+          name: error instanceof Error ? error.name : "Error",
           message:
-            error instanceof Error
-              ? error.message
-              : 'Unknown automation error',
+            error instanceof Error ? error.message : "Unknown automation error",
         },
       };
     } finally {

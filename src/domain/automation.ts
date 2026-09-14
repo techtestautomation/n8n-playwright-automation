@@ -9,29 +9,34 @@ export type LocatorTarget =
     };
 
 export interface NavigateAction {
-  action: 'navigate';
+  action: "navigate";
   url: string;
 }
 
 export type ClickAction = {
-  action: 'click';
+  action: "click";
 } & LocatorTarget;
 
 export type FillAction = {
-  action: 'fill';
+  action: "fill";
   value: string;
 } & LocatorTarget;
 
 export type GetTextAction = {
-  action: 'getText';
+  action: "getText";
 } & LocatorTarget;
 
 export type WaitForAction = {
-  action: 'waitFor';
+  action: "waitFor";
+} & LocatorTarget;
+
+export type VerifyTextAction = {
+  action: "verifyText";
+  expected: string;
 } & LocatorTarget;
 
 export interface ScreenshotAction {
-  action: 'screenshot';
+  action: "screenshot";
 }
 
 export type AutomationAction =
@@ -40,9 +45,10 @@ export type AutomationAction =
   | FillAction
   | GetTextAction
   | WaitForAction
+  | VerifyTextAction
   | ScreenshotAction;
 
-export type AutomationStatus = 'passed' | 'failed';
+export type AutomationStatus = "passed" | "failed";
 
 export interface AutomationRunRequest {
   steps: AutomationAction[];
@@ -56,8 +62,8 @@ export interface AutomationArtifacts {
 
 export interface AutomationStepResult {
   index: number;
-  action: AutomationAction['action'];
-  status: 'passed';
+  action: AutomationAction["action"];
+  status: "passed";
   durationMs: number;
   data?: Record<string, unknown>;
   artifact?: string;
@@ -83,12 +89,10 @@ function validateLocatorTarget(
   index: number,
 ): LocatorTarget {
   const hasLocator =
-    typeof step.locator === 'string' &&
-    step.locator.trim() !== '';
+    typeof step.locator === "string" && step.locator.trim() !== "";
 
   const hasLocatorRef =
-    typeof step.locatorRef === 'string' &&
-    step.locatorRef.trim() !== '';
+    typeof step.locatorRef === "string" && step.locatorRef.trim() !== "";
 
   if (hasLocator === hasLocatorRef) {
     throw new Error(
@@ -110,34 +114,34 @@ function validateLocatorTarget(
 export function validateAutomationRequest(
   input: unknown,
 ): AutomationRunRequest {
-  if (typeof input !== 'object' || input === null) {
-    throw new Error('Request body must be an object');
+  if (typeof input !== "object" || input === null) {
+    throw new Error("Request body must be an object");
   }
 
   const body = input as Record<string, unknown>;
 
   if (!Array.isArray(body.steps)) {
-    throw new Error('steps must be an array');
+    throw new Error("steps must be an array");
   }
 
   if (body.steps.length === 0) {
-    throw new Error('steps must contain at least one action');
+    throw new Error("steps must contain at least one action");
   }
 
   const steps = body.steps.map((rawStep, index): AutomationAction => {
-    if (typeof rawStep !== 'object' || rawStep === null) {
+    if (typeof rawStep !== "object" || rawStep === null) {
       throw new Error(`steps[${index}] must be an object`);
     }
 
     const step = rawStep as Record<string, unknown>;
 
-    if (typeof step.action !== 'string') {
+    if (typeof step.action !== "string") {
       throw new Error(`steps[${index}].action is required`);
     }
 
     switch (step.action) {
-      case 'navigate': {
-        if (typeof step.url !== 'string' || step.url.trim() === '') {
+      case "navigate": {
+        if (typeof step.url !== "string" || step.url.trim() === "") {
           throw new Error(`steps[${index}].url is required`);
         }
 
@@ -149,56 +153,63 @@ export function validateAutomationRequest(
           throw new Error(`steps[${index}].url must be a valid URL`);
         }
 
-        if (
-          parsedUrl.protocol !== 'http:' &&
-          parsedUrl.protocol !== 'https:'
-        ) {
-          throw new Error(
-            `steps[${index}].url must use http or https`,
-          );
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+          throw new Error(`steps[${index}].url must use http or https`);
         }
 
         return {
-          action: 'navigate',
+          action: "navigate",
           url: parsedUrl.toString(),
         };
       }
 
-      case 'click': {
+      case "click": {
         return {
-          action: 'click',
+          action: "click",
           ...validateLocatorTarget(step, index),
         };
       }
 
-      case 'fill': {
-        if (typeof step.value !== 'string') {
+      case "fill": {
+        if (typeof step.value !== "string") {
           throw new Error(`steps[${index}].value is required`);
         }
 
         return {
-          action: 'fill',
+          action: "fill",
           value: step.value,
           ...validateLocatorTarget(step, index),
         };
       }
 
-      case 'getText': {
+      case "getText": {
         return {
-          action: 'getText',
+          action: "getText",
           ...validateLocatorTarget(step, index),
         };
       }
 
-      case 'waitFor':
+      case "waitFor":
         return {
-          action: 'waitFor',
+          action: "waitFor",
           ...validateLocatorTarget(step, index),
         };
 
-      case 'screenshot':
+      case "verifyText": {
+        if (typeof step.expected !== "string" || step.expected.trim() === "") {
+          throw new Error(`steps[${index}].expected is required`);
+        }
+
         return {
-          action: 'screenshot',
+          action: "verifyText",
+          expected: step.expected,
+          ...validateLocatorTarget(step, index),
+        };
+      }
+
+      case "screenshot":
+        return {
+          action: "screenshot",
         };
 
       default:
@@ -211,8 +222,6 @@ export function validateAutomationRequest(
   return {
     steps,
     captureTrace:
-      typeof body.captureTrace === 'boolean'
-        ? body.captureTrace
-        : false,
+      typeof body.captureTrace === "boolean" ? body.captureTrace : false,
   };
 }
