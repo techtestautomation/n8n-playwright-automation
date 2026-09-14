@@ -184,6 +184,12 @@ test("verifyText reports expected and actual text on failure", async () => {
 
     assert.equal(result.status, "failed");
 
+    assert.ok(result.artifacts.screenshot);
+
+    assert.match(result.artifacts.screenshot, /-failed\.png$/);
+
+    await access(result.artifacts.screenshot);
+
     assert.match(
       result.error?.message ?? "",
       /Expected "Expected Heading".*received "Actual Heading"/i,
@@ -196,6 +202,152 @@ test("verifyText reports expected and actual text on failure", async () => {
         } else {
           resolve();
         }
+      });
+    });
+  }
+});
+
+test("retries a retryable action and succeeds", async () => {
+  const server = createServer((_request, response) => {
+    response.writeHead(200, {
+      "content-type": "text/html; charset=utf-8",
+    });
+
+    response.end(`
+      <!doctype html>
+      <html>
+        <body>
+          <h1 id="heading">Wrong Heading</h1>
+
+          <script>
+            setTimeout(() => {
+              document.querySelector("#heading").textContent =
+                "Expected Heading";
+            }, 50);
+          </script>
+        </body>
+      </html>
+    `);
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
+
+  try {
+    const address = server.address();
+
+    assert.ok(address);
+
+    if (typeof address === "string") {
+      throw new Error("Expected TCP server address");
+    }
+
+    const executor = new PlaywrightAutomationExecutor(
+      new JsonLocatorRegistry("./locators"),
+    );
+
+    const result = await executor.run({
+      steps: [
+        {
+          action: "navigate",
+          url: `http://127.0.0.1:${address.port}`,
+        },
+        {
+          action: "verifyText",
+          locator: "#heading",
+          expected: "Expected Heading",
+        },
+      ],
+      retries: 1,
+    });
+
+    assert.equal(result.status, "passed");
+    assert.equal(result.steps?.length, 2);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+});
+
+test("fails after retry attempts are exhausted", async () => {
+  const server = createServer((_request, response) => {
+    response.writeHead(200, {
+      "content-type": "text/html; charset=utf-8",
+    });
+
+    response.end(`
+      <!doctype html>
+      <html>
+        <body>
+          <h1 id="heading">Wrong Heading</h1>
+        </body>
+      </html>
+    `);
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
+
+  try {
+    const address = server.address();
+
+    assert.ok(address);
+
+    if (typeof address === "string") {
+      throw new Error("Expected TCP server address");
+    }
+
+    const executor = new PlaywrightAutomationExecutor(
+      new JsonLocatorRegistry("./locators"),
+    );
+
+    const result = await executor.run({
+      steps: [
+        {
+          action: "navigate",
+          url: `http://127.0.0.1:${address.port}`,
+        },
+        {
+          action: "verifyText",
+          locator: "#heading",
+          expected: "Expected Heading",
+        },
+      ],
+      retries: 2,
+    });
+
+    assert.equal(result.status, "failed");
+
+    assert.ok(result.failedStep);
+    assert.equal(result.failedStep.index, 1);
+    assert.equal(result.failedStep.action, "verifyText");
+
+    assert.match(
+      result.failedStep.error.message,
+      /Expected "Expected Heading".*received "Wrong Heading"/i,
+    );
+
+    assert.ok(result.artifacts.screenshot);
+    await access(result.artifacts.screenshot);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
       });
     });
   }

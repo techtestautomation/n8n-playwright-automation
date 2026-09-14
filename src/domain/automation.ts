@@ -53,6 +53,7 @@ export type AutomationStatus = "passed" | "failed";
 export interface AutomationRunRequest {
   steps: AutomationAction[];
   captureTrace?: boolean;
+  retries?: number;
 }
 
 export interface AutomationArtifacts {
@@ -69,13 +70,27 @@ export interface AutomationStepResult {
   artifact?: string;
 }
 
+export interface AutomationFailedStep {
+  index: number;
+  action: AutomationAction["action"];
+  durationMs: number;
+  locator?: string;
+  locatorRef?: string;
+  error: {
+    name: string;
+    message: string;
+  };
+}
+
 export interface AutomationRunResult {
   status: AutomationStatus;
   startedAt: string;
   durationMs: number;
   steps?: AutomationStepResult[];
+  failedStep?: AutomationFailedStep;
   artifacts: {
     trace?: string;
+    screenshot?: string;
   };
 
   error?: {
@@ -219,9 +234,24 @@ export function validateAutomationRequest(
     }
   });
 
+  let retries = 0;
+
+  if (body.retries !== undefined) {
+    if (
+      typeof body.retries !== "number" ||
+      !Number.isInteger(body.retries) ||
+      body.retries < 0
+    ) {
+      throw new Error("retries must be a non-negative integer");
+    }
+
+    retries = body.retries;
+  }
+
   return {
     steps,
     captureTrace:
       typeof body.captureTrace === "boolean" ? body.captureTrace : false,
+    retries,
   };
 }

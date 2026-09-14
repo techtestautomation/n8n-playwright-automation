@@ -21,6 +21,7 @@ test("validates and normalizes a navigate step", () => {
       },
     ],
     captureTrace: false,
+    retries: 0,
   });
 });
 
@@ -245,5 +246,60 @@ test("rejects verifyText without expected text", () => {
         ],
       }),
     /expected is required/i,
+  );
+});
+
+test("defaults retries to zero", () => {
+  const result = validateAutomationRequest({
+    steps: [
+      {
+        action: "screenshot",
+      },
+    ],
+  });
+
+  assert.equal(result.retries, 0);
+});
+
+test("validates retries", () => {
+  const result = validateAutomationRequest({
+    steps: [
+      {
+        action: "screenshot",
+      },
+    ],
+    retries: 2,
+  });
+
+  assert.equal(result.retries, 2);
+});
+
+test("rejects negative retries", () => {
+  assert.throws(
+    () =>
+      validateAutomationRequest({
+        steps: [
+          {
+            action: "screenshot",
+          },
+        ],
+        retries: -1,
+      }),
+    /retries must be a non-negative integer/i,
+  );
+});
+
+test("rejects fractional retries", () => {
+  assert.throws(
+    () =>
+      validateAutomationRequest({
+        steps: [
+          {
+            action: "screenshot",
+          },
+        ],
+        retries: 1.5,
+      }),
+    /retries must be a non-negative integer/i,
   );
 });
