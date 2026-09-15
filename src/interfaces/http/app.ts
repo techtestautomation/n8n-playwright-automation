@@ -3,10 +3,12 @@ import Fastify from "fastify";
 import type { AutomationExecutor } from "../../application/automation-executor.js";
 import { ScriptParser } from "../../application/script-parser.js";
 import { validateAutomationRequest } from "../../domain/automation.js";
+import type { AutomationQueue } from "../../application/automation-queue.js";
 
 export function buildApp(
   executor: AutomationExecutor,
   scriptParser: ScriptParser,
+  queue?: AutomationQueue,
 ) {
   const app = Fastify({ logger: true });
 
@@ -65,6 +67,67 @@ export function buildApp(
           },
         });
       }
+    },
+  );
+
+  app.post<{ Body: unknown }>("/automation/jobs", async (request, reply) => {
+    if (!queue) {
+      return reply.code(503).send({
+        status: "failed",
+        error: {
+          name: "ServiceUnavailableError",
+          message: "Automation queue is not configured",
+        },
+      });
+    }
+
+    try {
+      const input = validateAutomationRequest(request.body);
+      const job = await queue.enqueue(input);
+
+      return reply.code(202).send({
+        jobId: job.id,
+        status: job.status,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      return reply.code(400).send({
+        status: "failed",
+        error: {
+          name: "ValidationError",
+          message,
+        },
+      });
+    }
+  });
+
+  app.get<{ Params: { jobId: string } }>(
+    "/automation/jobs/:jobId",
+    async (request, reply) => {
+      if (!queue) {
+        return reply.code(503).send({
+          status: "failed",
+          error: {
+            name: "ServiceUnavailableError",
+            message: "Automation queue is not configured",
+          },
+        });
+      }
+
+      const job = await queue.get(request.params.jobId);
+
+      if (!job) {
+        return reply.code(404).send({
+          status: "failed",
+          error: {
+            name: "NotFoundError",
+            message: `Automation job "${request.params.jobId}" was not found`,
+          },
+        });
+      }
+
+      return reply.code(200).send(job);
     },
   );
 

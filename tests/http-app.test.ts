@@ -3,7 +3,14 @@ import test from "node:test";
 
 import type { AutomationExecutor } from "../src/application/automation-executor.js";
 import { ScriptParser } from "../src/application/script-parser.js";
+import { InMemoryAutomationQueue } from "../src/infrastructure/in-memory-automation-queue.js";
 import { buildApp } from "../src/interfaces/http/app.js";
+
+const unusedExecutor: AutomationExecutor = {
+  async run() {
+    throw new Error("Executor should not be called for queued jobs");
+  },
+};
 
 test("runs a human-friendly automation script", async () => {
   const executor: AutomationExecutor = {
@@ -51,6 +58,8 @@ test("runs a human-friendly automation script", async () => {
   });
 
   assert.equal(response.statusCode, 200);
+
+  await app.close();
 });
 
 test("rejects run-script without a script string", async () => {
@@ -73,7 +82,10 @@ test("rejects run-script without a script string", async () => {
   const body = response.json();
 
   assert.equal(body.status, "failed");
+
   assert.match(body.error.message, /script must be a string/i);
+
+  await app.close();
 });
 
 test("returns structured failure diagnostics for script execution", async () => {
@@ -210,6 +222,95 @@ test("returns structured failure diagnostics for JSON execution", async () => {
   assert.match(
     body.error.message,
     /Expected "Hello Raj".*received "Hello Ravi"/i,
+  );
+
+  await app.close();
+});
+
+test("queues an automation job", async () => {
+  const queue = new InMemoryAutomationQueue();
+
+  const app = buildApp(unusedExecutor, new ScriptParser(), queue);
+
+  const response = await app.inject({
+    method: "POST",
+    url: "/automation/jobs",
+    payload: {
+      steps: [
+        {
+          action: "navigate",
+          url: "https://example.com",
+        },
+      ],
+    },
+  });
+
+  assert.equal(response.statusCode, 202);
+
+  const body = response.json();
+
+  assert.ok(body.jobId);
+  assert.equal(body.status, "queued");
+
+  const job = await queue.get(body.jobId);
+
+  assert.ok(job);
+  assert.equal(job.status, "queued");
+
+  await app.close();
+});
+
+test("returns an automation job by id", async () => {
+  const queue = new InMemoryAutomationQueue();
+
+  const job = await queue.enqueue({
+    steps: [
+      {
+        action: "navigate",
+        url: "https://example.com",
+      },
+    ],
+  });
+
+  const app = buildApp(unusedExecutor, new ScriptParser(), queue);
+
+  const response = await app.inject({
+    method: "GET",
+    url: `/automation/jobs/${job.id}`,
+  });
+
+  assert.equal(response.statusCode, 200);
+
+  const body = response.json();
+
+  assert.equal(body.id, job.id);
+  assert.equal(body.status, "queued");
+
+  assert.deepEqual(body.request, job.request);
+
+  await app.close();
+});
+
+test("returns 404 for an unknown automation job", async () => {
+  const queue = new InMemoryAutomationQueue();
+
+  const app = buildApp(unusedExecutor, new ScriptParser(), queue);
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/automation/jobs/missing-job",
+  });
+
+  assert.equal(response.statusCode, 404);
+
+  const body = response.json();
+
+  assert.equal(body.status, "failed");
+  assert.equal(body.error.name, "NotFoundError");
+
+  assert.match(
+    body.error.message,
+    /Automation job "missing-job" was not found/,
   );
 
   await app.close();
