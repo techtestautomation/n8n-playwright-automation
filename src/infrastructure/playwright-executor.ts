@@ -12,24 +12,17 @@ import type {
   AutomationRunResult,
   AutomationStepResult,
 } from "../domain/automation.js";
+import { PlaywrightNavigateActionExecutor } from "./playwright-navigate-action-executor.js";
+import { PlaywrightClickActionExecutor } from "./playwright-click-action-executor.js";
+import { PlaywrightLocatorResolver } from "./playwright-locator-resolver.js";
+import { PlaywrightFillActionExecutor } from "./playwright-fill-action-executor.js";
+import { PlaywrightGetTextActionExecutor } from "./playwright-get-text-action-executor.js";
+import { PlaywrightVerifyTextActionExecutor } from "./playwright-verify-text-action-executor.js";
+import { PlaywrightWaitForActionExecutor } from "./playwright-wait-for-action-executor.js";
+import { PlaywrightScreenshotActionExecutor } from "./playwright-screenshot-action-executor.js";
 
 export class PlaywrightAutomationExecutor implements AutomationExecutor {
   constructor(private readonly locatorRegistry: LocatorRegistry) {}
-
-  private resolveLocator(step: {
-    locator?: string;
-    locatorRef?: string;
-  }): string {
-    if (step.locator) {
-      return step.locator;
-    }
-
-    if (step.locatorRef) {
-      return this.locatorRegistry.resolve(step.locatorRef);
-    }
-
-    throw new Error("Locator is missing");
-  }
 
   private isRetryableAction(action: AutomationAction["action"]): boolean {
     return (
@@ -78,6 +71,40 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
 
       page = await context.newPage();
 
+      const navigateActionExecutor = new PlaywrightNavigateActionExecutor(page);
+
+      const locatorResolver = new PlaywrightLocatorResolver(
+        this.locatorRegistry,
+      );
+
+      const clickActionExecutor = new PlaywrightClickActionExecutor(
+        page,
+        locatorResolver,
+      );
+
+      const fillActionExecutor = new PlaywrightFillActionExecutor(
+        page,
+        locatorResolver,
+      );
+      const getTextActionExecutor = new PlaywrightGetTextActionExecutor(
+        page,
+        locatorResolver,
+      );
+
+      const waitForActionExecutor = new PlaywrightWaitForActionExecutor(
+        page,
+        locatorResolver,
+      );
+
+      const verifyTextActionExecutor = new PlaywrightVerifyTextActionExecutor(
+        page,
+        locatorResolver,
+      );
+
+      const screenshotActionExecutor = new PlaywrightScreenshotActionExecutor(
+        page,
+      );
+
       for (const [index, step] of request.steps.entries()) {
         const stepStarted = Date.now();
 
@@ -90,132 +117,73 @@ export class PlaywrightAutomationExecutor implements AutomationExecutor {
             try {
               switch (step.action) {
                 case "navigate": {
-                  await page.goto(step.url, {
-                    waitUntil: "domcontentloaded",
-                    timeout: 30_000,
+                  const result = await navigateActionExecutor.execute(step, {
+                    stepIndex: index,
                   });
 
-                  stepResults.push({
-                    index,
-                    action: step.action,
-                    status: "passed",
-                    durationMs: Date.now() - stepStarted,
-                    data: {
-                      finalUrl: page.url(),
-                      title: await page.title(),
-                    },
-                  });
+                  stepResults.push(result);
 
                   break;
                 }
 
                 case "click": {
-                  const locator = this.resolveLocator(step);
-
-                  await page.locator(locator).click();
-
-                  stepResults.push({
-                    index,
-                    action: step.action,
-                    status: "passed",
-                    durationMs: Date.now() - stepStarted,
+                  const result = await clickActionExecutor.execute(step, {
+                    stepIndex: index,
                   });
+
+                  stepResults.push(result);
 
                   break;
                 }
 
                 case "fill": {
-                  const locator = this.resolveLocator(step);
-
-                  await page.locator(locator).fill(step.value);
-
-                  stepResults.push({
-                    index,
-                    action: step.action,
-                    status: "passed",
-                    durationMs: Date.now() - stepStarted,
+                  const result = await fillActionExecutor.execute(step, {
+                    stepIndex: index,
                   });
+
+                  stepResults.push(result);
 
                   break;
                 }
 
                 case "getText": {
-                  const locator = this.resolveLocator(step);
-
-                  const text = await page.locator(locator).textContent();
-
-                  stepResults.push({
-                    index,
-                    action: step.action,
-                    status: "passed",
-                    durationMs: Date.now() - stepStarted,
-                    data: {
-                      text,
-                    },
+                  const result = await getTextActionExecutor.execute(step, {
+                    stepIndex: index,
                   });
+
+                  stepResults.push(result);
 
                   break;
                 }
 
                 case "verifyText": {
-                  const locator = this.resolveLocator(step);
-
-                  const actual = await page.locator(locator).textContent();
-
-                  if (actual?.trim() !== step.expected.trim()) {
-                    throw new Error(
-                      `Text verification failed for "${step.locatorRef ?? step.locator}". ` +
-                        `Expected "${step.expected}", but received "${actual?.trim() ?? ""}"`,
-                    );
-                  }
-
-                  stepResults.push({
-                    index,
-                    action: step.action,
-                    status: "passed",
-                    durationMs: Date.now() - stepStarted,
-                    data: {
-                      expected: step.expected,
-                      actual: actual?.trim() ?? "",
-                    },
+                  const result = await verifyTextActionExecutor.execute(step, {
+                    stepIndex: index,
                   });
+
+                  stepResults.push(result);
 
                   break;
                 }
 
                 case "waitFor": {
-                  const locator = this.resolveLocator(step);
-
-                  await page.locator(locator).waitFor();
-
-                  stepResults.push({
-                    index,
-                    action: step.action,
-                    status: "passed",
-                    durationMs: Date.now() - stepStarted,
+                  const result = await waitForActionExecutor.execute(step, {
+                    stepIndex: index,
                   });
+
+                  stepResults.push(result);
 
                   break;
                 }
 
                 case "screenshot": {
-                  const screenshotPath = path.join(
+                  const result = await screenshotActionExecutor.execute(step, {
+                    stepIndex: index,
                     artifactDir,
-                    `${runId}-step-${index}.png`,
-                  );
-
-                  await page.screenshot({
-                    path: screenshotPath,
-                    fullPage: true,
+                    runId,
                   });
 
-                  stepResults.push({
-                    index,
-                    action: step.action,
-                    status: "passed",
-                    durationMs: Date.now() - stepStarted,
-                    artifact: screenshotPath,
-                  });
+                  stepResults.push(result);
 
                   break;
                 }
