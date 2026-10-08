@@ -1,0 +1,51 @@
+.action-palette {
+  width: 230px;
+  flex: 0 0 230px;
+  padding: 18px;
+  overflow-y: auto;
+  border-right: 1px solid #d9d9d9;
+  background: #fafafa;
+}
+
+.action-palette h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.action-palette__hint {
+  margin: 6px 0 18px;
+  color: #666;
+  font-size: 12px;
+}
+
+.action-palette__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-palette__action {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+}
+
+.action-palette__action:hover {
+  border-color: #777;
+}
+
+.action-palette__action strong {
+  font-size: 13px;
+}
+
+.action-palette__action span {
+  color: #666;
+  font-size: 11px;
+}

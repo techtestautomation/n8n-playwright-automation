@@ -1,5 +1,7 @@
 import { AutomationWorkerRunner } from "./application/automation-worker-runner.js";
 import { ScriptParser } from "./application/script-parser.js";
+import { WorkflowCompiler } from "./application/workflow-compiler.js";
+import { WorkflowValidator } from "./application/workflow-validator.js";
 import { DefaultAutomationWorker } from "./infrastructure/automation-worker.js";
 import { InMemoryAutomationQueue } from "./infrastructure/in-memory-automation-queue.js";
 import { JsonLocatorRegistry } from "./infrastructure/json-locator-registry.js";
@@ -14,11 +16,15 @@ const scriptParser = new ScriptParser();
 
 const queue = new InMemoryAutomationQueue();
 
+const workflowValidator = new WorkflowValidator();
+
+const workflowCompiler = new WorkflowCompiler(workflowValidator);
+
 const worker = new DefaultAutomationWorker(queue, executor);
 
 const workerRunner = new AutomationWorkerRunner(queue, worker);
 
-const app = buildApp(executor, scriptParser, queue);
+const app = buildApp(executor, scriptParser, queue, workflowCompiler);
 
 const workerRunnerPromise = workerRunner.start();
 
@@ -28,6 +34,7 @@ app.addHook("onClose", async () => {
 });
 
 const port = Number(process.env.PORT ?? 3001);
+
 const host = process.env.HOST ?? "0.0.0.0";
 
 await app.listen({

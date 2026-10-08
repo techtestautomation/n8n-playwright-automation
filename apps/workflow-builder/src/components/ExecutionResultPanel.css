@@ -1,0 +1,233 @@
+.execution-panel {
+  padding: 18px 20px;
+  border-top: 1px solid #ddd;
+  background: #fff;
+}
+
+.execution-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.execution-panel__header h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.execution-panel__job-id {
+  font-family: monospace;
+  font-size: 11px;
+  color: #666;
+}
+
+.execution-panel__status {
+  padding: 5px 9px;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.execution-panel__status--passed {
+  border-color: #3a7d44;
+}
+
+.execution-panel__status--failed {
+  border-color: #a33;
+}
+
+.execution-panel__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.execution-panel__summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+}
+
+.execution-panel__summary span {
+  font-size: 11px;
+  color: #666;
+}
+
+.execution-panel__summary strong {
+  font-size: 14px;
+}
+
+.execution-panel__steps {
+  margin-top: 18px;
+}
+
+.execution-panel__steps h3,
+.execution-panel__artifacts h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.execution-step {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.execution-step__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.execution-step__header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.execution-step__action {
+  font-family: monospace;
+  font-size: 12px;
+  color: #555;
+}
+
+.execution-step__data {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.execution-step__data-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
+  padding-top: 8px;
+  font-size: 12px;
+}
+
+.execution-step__data-row span {
+  color: #666;
+}
+
+.execution-step__data-row code {
+  overflow-wrap: anywhere;
+}
+
+.execution-step__error {
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid #d99;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.execution-panel__artifacts {
+  margin-top: 18px;
+}
+
+.execution-panel__artifact {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.execution-panel__artifact code {
+  overflow-wrap: anywhere;
+}
+
+.execution-step--failed {
+  border-color: #d99;
+}
+
+.execution-panel__screenshot {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  margin-top: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.execution-panel__screenshot-button {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  padding: 0;
+  margin-top: 8px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.screenshot-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.screenshot-modal__content {
+  position: relative;
+  max-width: 95vw;
+  max-height: 95vh;
+}
+
+.screenshot-modal__image {
+  display: block;
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.screenshot-modal__close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.execution-panel__artifact-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.execution-step__error-message {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  font-size: inherit;
+}
